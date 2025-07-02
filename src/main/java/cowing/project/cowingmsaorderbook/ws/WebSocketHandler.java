@@ -26,7 +26,7 @@ public class WebSocketHandler extends BinaryWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final OrderbookService orderbookService;
 
-    // 구독할 코인 목록 (기존과 동일)
+    // 구독할 코인 목록
     private static final List<String> COIN_CODES = List.of("KRW-XRP", "KRW-ETH", "KRW-BTC", "KRW-SNT", "KRW-ALT", "KRW-USDT", "KRW-SUI", "KRW-SOL",
             "KRW-DOGE", "KRW-POKT", "KRW-BORA", "KRW-RVN", "KRW-ORBS", "KRW-UNI", "KRW-ONDO", "KRW-VIRTUAL", "KRW-SOPH", "KRW-ADA", "KRW-NXPC", "KRW-ANIME",
             "KRW-PEPE", "KRW-TRUMP", "KRW-AGLD", "KRW-BCH", "KRW-ENS", "KRW-SEI", "KRW-SHIB", "KRW-STMX", "KRW-AAVE", "KRW-WCT", "KRW-STRAX", "KRW-LAYER",
@@ -76,7 +76,6 @@ public class WebSocketHandler extends BinaryWebSocketHandler {
         log.error("Transport error on session {}: {}", session.getId(), exception.getMessage());
     }
 
-    // 구독 메시지 전송 로직은 TextMessage를 사용하는 것이 맞으므로 변경 없음
     private void sendSubscriptionMessage(WebSocketSession session) throws IOException {
         String ticket = UUID.randomUUID().toString();
 
