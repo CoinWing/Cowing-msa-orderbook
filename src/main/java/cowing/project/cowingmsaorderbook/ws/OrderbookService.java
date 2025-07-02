@@ -43,9 +43,9 @@ public class OrderbookService {
                 }
 
                 // 3. 메타데이터 업데이트 (HSET)
-                operations.opsForHash().put((K) metaKey, (Object) "timestamp", (Object) String.valueOf(orderbookDto.timestamp()));
-                operations.opsForHash().put((K) metaKey, (Object) "total_ask_size", (Object) orderbookDto.totalAskSize().toPlainString());
-                operations.opsForHash().put((K) metaKey, (Object) "total_bid_size", (Object) orderbookDto.totalBidSize().toPlainString());
+                operations.opsForHash().put((K) metaKey, "timestamp", String.valueOf(orderbookDto.timestamp()));
+                operations.opsForHash().put((K) metaKey, "total_ask_size", orderbookDto.totalAskSize().toPlainString());
+                operations.opsForHash().put((K) metaKey, "total_bid_size", orderbookDto.totalBidSize().toPlainString());
 
                 // EXEC: 트랜잭션 내의 모든 명령 실행 (Spring이 자동으로 호출)
                 // execute() 메서드가 반환되면 EXEC가 실행됩니다.
