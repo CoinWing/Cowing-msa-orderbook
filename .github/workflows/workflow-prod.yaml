@@ -1,0 +1,54 @@
+name: CICD for orderbook
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set lowercase image name
+        id: image_name
+        run: |
+          LOWERCASE_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="${LOWERCASE_OWNER}/cowing-msa-orderbook"
+          echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Generate version tag
+        id: version
+        run: |
+          DATE_VERSION="$(date +'%Y.%m.%d')"
+          SHORT_SHA="$(echo $GITHUB_SHA | cut -c1-7)"
+          VERSION="${DATE_VERSION}-${SHORT_SHA}"
+          echo "Generated version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Spring Boot Build
+        run: ./gradlew clean build --exclude-task test
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.image_name.outputs.image_name }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.image_name.outputs.image_name }}:latest 
