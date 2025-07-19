@@ -1,0 +1,13 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/coinwing/cowing-msa-orderbook
+  tag: latest
+  pullPolicy: Always
+  pullSecretName: ghcr-login-secret
+
+containerPort: 8081
+
+service:
+  type: ClusterIP
+  port: 80

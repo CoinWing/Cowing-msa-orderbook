@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msa-orderbook.fullname" . }}
+  labels:
+    app: {{ include "msa-orderbook.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "msa-orderbook.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "msa-orderbook.name" . }}
+    spec:
+      containers:
+        - name: {{ include "msa-orderbook.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecretName }}
