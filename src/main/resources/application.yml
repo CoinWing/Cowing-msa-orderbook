@@ -33,3 +33,6 @@ spring:
 
 server:
   port: ${SERVER_PORT:8081}
+
+websocket:
+  url: ${BROADCASTER_WEBSOCKET_URL}

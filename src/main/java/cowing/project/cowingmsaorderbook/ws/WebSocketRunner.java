@@ -2,6 +2,8 @@ package cowing.project.cowingmsaorderbook.ws;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -18,7 +20,9 @@ public class WebSocketRunner {
 
     private final WebSocketHandler upbitWebSocketHandler;
 
-    private static final String UPBIT_WEBSOCKET_URL = "wss://api.upbit.com/websocket/v1";
+    @Value("${websocket.url}")
+    private String broadcasterWebSocketUrl;
+
     private static final int MAX_RETRY_ATTEMPTS = 5; // 최대 5번
     private static final long INITIAL_RETRY_DELAY = 1000; // 1초
     private static final long MAX_RETRY_DELAY = 30000; // 30초
@@ -30,14 +34,14 @@ public class WebSocketRunner {
     }
 
     private void connectWithRetry(int attemptCount) {
-        log.info("Upbit WebSocket 연결중... (시도 횟수: {})", attemptCount + 1);
+        log.info("Broadcaster WebSocket 연결중... (시도 횟수: {})", attemptCount + 1);
 
         try {
             WebSocketClient client = new StandardWebSocketClient();
-            client.execute(upbitWebSocketHandler, UPBIT_WEBSOCKET_URL);
+            client.execute(upbitWebSocketHandler, broadcasterWebSocketUrl);
             log.info("WebSocket 연결 성공");
         } catch (Exception e) {
-            log.error("Upbit WebSocket 연결 실패 (시도 횟수: {}): {}",
+            log.error("Broadcaster WebSocket 연결 실패 (시도 횟수: {}): {}",
                     attemptCount + 1, e.getMessage());
 
             if (attemptCount < MAX_RETRY_ATTEMPTS - 1) {
