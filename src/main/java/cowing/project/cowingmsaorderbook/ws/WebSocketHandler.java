@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cowing.project.cowingmsaorderbook.dto.OrderbookDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -61,15 +63,27 @@ public class WebSocketHandler extends BinaryWebSocketHandler {
             if (jsonNode.has("type") && "orderbook".equals(jsonNode.get("type").asText())) {
                 OrderbookDto orderbookDto = objectMapper.readValue(jsonPayload, OrderbookDto.class);
                 
-                // Redis 저장
-                orderbookService.updateOrderbook(orderbookDto);
-                log.debug("Processed orderbook data for: {}", orderbookDto.code());
+                // Redis 저장 - 별도 예외 처리로 Redis 실패 시에도 메시지 처리 계속
+                try {
+                    orderbookService.updateOrderbook(orderbookDto);
+                    log.debug("Processed orderbook data for: {}", orderbookDto.code());
+                } catch (RedisConnectionFailureException e) {
+                    log.warn("Redis connection failed for orderbook {}: {}. Message processing continues.", 
+                             orderbookDto.code(), e.getMessage());
+                } catch (DataAccessException e) {
+                    log.warn("Redis data access error for orderbook {}: {}. Message processing continues.", 
+                             orderbookDto.code(), e.getMessage());
+                } catch (Exception e) {
+                    log.error("Unexpected error saving orderbook {} to Redis: {}. Message processing continues.", 
+                              orderbookDto.code(), e.getMessage());
+                }
             } else {
                 // orderbook이 아닌 데이터는 무시 (ticker 등)
                 log.debug("Ignoring non-orderbook message");
             }
         } catch (Exception e) {
-            log.error("Error processing message: {}", jsonPayload, e);
+            // JSON 파싱이나 DTO 변환 실패 시에만 전체 메시지 처리 실패로 간주
+            log.error("Error parsing message: {}", jsonPayload, e);
         }
     }
 
