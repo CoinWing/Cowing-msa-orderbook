@@ -1,5 +1,0 @@
-apiVersion: v2
-name: msa-orderbook
-description: Helm chart for Cowing MSA Orderbook application
-version: 0.1.0
-appVersion: "1.0"
