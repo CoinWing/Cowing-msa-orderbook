@@ -6,10 +6,16 @@ on:
  
 env:
   REGISTRY: ghcr.io
+  GITOPS_REPO: CoinWing/Infrastructure
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [msa-orderbook]
+
     permissions:
       contents: read
       packages: write
@@ -52,3 +58,28 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.image_name.outputs.image_name }}:${{ steps.version.outputs.version }}
             ${{ env.REGISTRY }}/${{ steps.image_name.outputs.image_name }}:latest 
+
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GITOPS_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+          ref: prod
+
+      - name: Update image tag in kustomization.yaml
+        run: |
+          TAG="${{ steps.version.outputs.version }}"
+          IMAGE="ghcr.io/coinwing/${{ matrix.service }}"
+          FILE="gitops/code/argocd/kustomize/${{ matrix.service }}/kustomization.yaml"
+
+          sed -i "s|newTag: .*|newTag: ${TAG}|" $FILE
+
+      - name: Commit and push changes to GitOps repo
+        run: |
+          cd gitops
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add code/argocd/kustomize/${{ matrix.service }}/kustomization.yaml
+          git commit -m "chore(${{ matrix.service }}): bump image tag to ${TAG}"
+          git push origin prod
