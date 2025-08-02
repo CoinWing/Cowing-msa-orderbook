@@ -1,4 +1,4 @@
-FROM gradle:8.14.2-jdk21 AS build
+FROM gradle:8.14.3-jdk21-alpine AS build
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY src ./src
 
 RUN gradle build -x test --no-daemon
 
-FROM amazoncorretto:21.0.7-alpine3.19
+FROM eclipse-temurin:21-jre-alpine-3.20
 
 WORKDIR /app
 
