@@ -1,0 +1,33 @@
+name: Semgrep CI for orderbook
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  semgrep:
+    name: semgrep-auth/ci
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+
+    # Dependabot 제외
+    if: (github.actor != 'dependabot[bot]')
+    
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep(backend-orderbook)
+        run: semgrep --config p/java --config p/security-audit . --sarif --output=semgrep.sarif
+      # semgrep 결과 gihub ui로 확인 가능
+      - name: Upload SARIF results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
