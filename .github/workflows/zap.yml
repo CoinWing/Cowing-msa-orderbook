@@ -1,0 +1,100 @@
+name: OWASP ZAP Scan(Local)
+
+on:
+  push:
+    branches: ['main']
+    path-ignore:
+      - "**.md"
+  pull_request:
+    branches:
+      - "**" 
+    path-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Front Repository
+        uses: actions/checkout@v4
+        with:
+          repository: CoinWing/front-service
+          path: front-service
+
+      - name: Checkout Auth Repository
+        uses: actions/checkout@v4
+        with: 
+          repository: CoinWing/Cowing-msa-auth
+          path: Cowing-msa-auth
+
+      - name: Checkout Broadcaster Repository
+        uses: actions/checkout@v4
+        with:
+          repository: CoinWing/Cowing-msa-broadcaster
+          path: Cowing-msa-broadcaster
+
+      - name: Checkout Orderbook Repository
+        uses: actions/checkout@v4
+        with:
+          repository: CoinWing/Cowing-msa-orderbook
+          path: Cowing-msa-orderbook
+      
+      - name: Checkout Trading Respotitory
+        uses: actions/checkout@v4
+        with:
+          repository: CoinWing/Cowing-msa-trading
+          path: Cowing-msa-trading
+
+
+      - name: Checkout Infrastructure Repository
+        uses: actions/checkout@v4
+        with:
+          repository: CoinWing/Infrastructure
+          path: Infrastructure
+
+
+      - name: Install docker-compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      - name: Start services
+        working-directory: Infrastructure/code/docker
+        run: docker-compose up -d
+
+      - name: Wait for nginx to be ready
+        run: |
+          for i in { 1..30 }; do
+            if nc -z localhost 443; then
+              echo "Nginx is ready"
+              break
+            fi
+            echo "Waiting for nginx to be ready..."
+            sleep 5
+          done
+
+      - name: Run OWASP ZAP Baseline Scan
+        run: |
+          mkdir -p zap_output
+          chmod 777 zap_output
+          docker network ls
+          docker run --rm \
+            -v $(pwd)/zap_output:/zap/wrk \
+            --network="docker_trade-network" \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://frontend:3000 \
+            -r zap_report.html \
+            -I 
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_output/zap_report.html
+
+      - name: Tear down services
+        working-directory: Infrastructure/code/docker
+        run: docker-compose down && echo "✅ OWASP ZAP 취약점 스캐닝 완료"
