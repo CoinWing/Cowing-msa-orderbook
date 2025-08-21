@@ -3,12 +3,12 @@ name: OWASP ZAP Scan(Local)
 on:
   push:
     branches: ['main']
-    path-ignore:
+    paths-ignore:
       - "**.md"
   pull_request:
     branches:
-      - "**" 
-    path-ignore:
+      - "main" 
+    paths-ignore:
       - "**.md"
   workflow_dispatch:
 

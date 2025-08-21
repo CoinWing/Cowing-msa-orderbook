@@ -3,9 +3,13 @@ name: Semgrep CI for orderbook
 on:
   push:
     branches: ['main']
+    paths-ignore:
+      - "**.md"
   pull_request:
     branches:
-      - "**"
+      - "main"
+    paths-ignore:
+      - "**.md"
   workflow_dispatch: {}
 
 permissions:
